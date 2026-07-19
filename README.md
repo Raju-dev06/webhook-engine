@@ -1,43 +1,54 @@
-# Webhook Delivery Engine
+# 🚀 Webhook Engine
 
-A production-ready Webhook Delivery Engine built with Java 21, Spring Boot 3.3, MySQL 8, and RabbitMQ.
+A highly resilient, production-ready Webhook Delivery Engine built with **Java, Spring Boot, RabbitMQ, and MySQL**. This project demonstrates how to handle asynchronous event-driven architectures, exponential backoff, cryptographic security, and idempotency in distributed systems.
 
-## Features
-- **Reliable Delivery:** Uses RabbitMQ for durable and reliable asynchronous processing.
-- **Exponential Backoff Retry:** Failed deliveries are retried at 5s, 10s, 20s, and 40s using separate TTL queues.
-- **Dead Letter Queue (DLQ):** Exhausted retries are moved to a DLQ for operator inspection.
-- **HMAC SHA-256 Signing:** All outgoing webhook requests are signed to guarantee authenticity and integrity.
-- **Idempotency:** Prevents duplicate event processing using an `idempotency_key`.
-- **Manual Replay:** APIs provided to manually replay failed deliveries from the DLQ.
-- **Comprehensive Tracking:** Records overall delivery status and every individual HTTP attempt.
+## 🌟 Key Features
 
-## Technology Stack
-- Java 21
-- Spring Boot 3.3.x (Web, Data JPA, AMQP, Validation)
-- MySQL 8
-- RabbitMQ
-- MapStruct & Lombok
-- Docker & Docker Compose
-- Swagger/OpenAPI
+* **Asynchronous Delivery via RabbitMQ:** Decouples event generation from delivery using message queues, ensuring the core API remains blazing fast.
+* **Resilience & Exponential Backoff:** Automatically handles client server outages (HTTP 500s, connection timeouts) by routing failed messages to a retry queue (Dead Letter Queue routing) with intelligent exponential delays.
+* **Cryptographic Security (HMAC SHA-256):** Every outgoing webhook is mathematically signed using a unique secret key. The receiver can verify the `x-webhook-signature` header to guarantee the payload was not tampered with and originated from our servers.
+* **Idempotency & Concurrency Control:** 
+  * Prevents duplicate event processing using strict database constraints.
+  * Implements **Optimistic Locking** (`@Version`) in Hibernate to safely handle thousands of concurrent delivery attempts without race conditions.
+* **Live Interactive Dashboard:** Includes a built-in frontend UI (`http://localhost:8080/index.html`) to visually demonstrate real-time webhook delivery, simulate server outages, and watch the RabbitMQ retry mechanics in action.
 
-## How to Run
+## 🛠️ Tech Stack
 
-1. **Start Infrastructure (MySQL & RabbitMQ):**
-   ```bash
-   docker-compose up -d
-   ```
+* **Backend:** Java 21, Spring Boot 3.3, Spring Data JPA
+* **Database:** MySQL 8 (Persisted via Docker Volumes)
+* **Message Broker:** RabbitMQ 3.13 (Exchanges, Queues, Routing Keys)
+* **Frontend UI:** HTML, CSS (Glassmorphism design), Vanilla JavaScript
+* **Infrastructure:** Docker & Docker Compose
 
-2. **Run Application:**
-   ```bash
-   ./mvnw spring-boot:run
-   ```
+## 🚀 Getting Started
 
-3. **Access APIs:**
-   - Swagger UI: `http://localhost:8080/swagger-ui.html`
-   - RabbitMQ Management: `http://localhost:15672` (guest/guest)
+### 1. Start the Infrastructure
+Make sure Docker Desktop is running, then spin up the MySQL and RabbitMQ containers:
+```bash
+docker-compose up -d
+```
 
-## API Flow
-1. Register an Endpoint (`POST /api/v1/endpoints`).
-2. Subscribe Endpoint to an Event Type (`POST /api/v1/endpoints/subscribe`).
-3. Publish an Event (`POST /api/v1/events`).
-4. View Delivery History (`GET /api/v1/deliveries/history/{endpointId}`).
+### 2. Run the Spring Boot Server
+You can run this via your IDE or terminal:
+```bash
+mvn spring-boot:run
+```
+
+### 3. Open the Dashboard
+Navigate to `http://localhost:8080/index.html` in your browser. From here, you can:
+1. Register a webhook endpoint (either the built-in mock receiver or an external tool like `webhook.site`).
+2. Simulate a client outage by toggling the server status.
+3. Publish events and watch the engine securely sign and deliver the payloads in real-time!
+
+## 🏗️ Architecture
+
+1. **Event Trigger:** A business action occurs (e.g., `user.created`) and is sent to the `EventService`.
+2. **Idempotency Check:** The event is saved to the database. If it's a duplicate, it's rejected.
+3. **Queueing:** The event is published to a RabbitMQ Exchange.
+4. **Processing:** The `DeliveryWorker` consumes the message from the queue.
+5. **Security:** The payload is hashed using HMAC SHA-256.
+6. **Execution:** An HTTP POST request is sent to the client.
+7. **Retry Logic:** If the client's server is down, the message is routed to a retry queue with a delay, and the delivery is attempted again later.
+
+---
+*Built to demonstrate enterprise-grade distributed system patterns.*
