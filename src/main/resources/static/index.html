@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Webhook Delivery Engine | Live Demo</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <header class="glass-panel">
+            <div class="logo">
+                <div class="pulse-dot"></div>
+                <h1>Webhook Engine</h1>
+            </div>
+            <div class="status-indicator">
+                <span id="connection-status">Connecting...</span>
+            </div>
+        </header>
+
+        <main class="dashboard">
+            <!-- Left Column: Controls -->
+            <section class="control-panel glass-panel">
+                <h2>Control Center</h2>
+                
+                <div class="card">
+                    <h3>1. Setup Endpoint</h3>
+                    <p class="subtitle">Enter a URL to receive webhooks (leave blank for local demo receiver).</p>
+                    <input type="text" id="endpoint-url" class="input-text mt-2 mb-2" placeholder="e.g., https://webhook.site/..." style="width:100%; padding: 10px; border-radius: 6px; border: 1px solid #334155; background: #0f172a; color: white;">
+                    <button id="btn-setup" class="btn primary">Register Endpoint</button>
+                    <div id="setup-status" class="status-text mt-2"></div>
+                </div>
+
+                <div class="card mt-4">
+                    <h3>2. Client Server Status</h3>
+                    <p class="subtitle">Simulate a client server outage to watch the RabbitMQ Exponential Backoff retries in real-time.</p>
+                    <label class="toggle-switch mt-2">
+                        <input type="checkbox" id="toggle-failure">
+                        <span class="slider"></span>
+                    </label>
+                    <span id="failure-status-text" class="status-text ml-2">Server is Online (HTTP 200)</span>
+                </div>
+
+                <div class="card mt-4">
+                    <h3>3. Trigger Event</h3>
+                    <p class="subtitle">Publish a new event to the exchange.</p>
+                    <button id="btn-publish" class="btn success" disabled>Publish 'user.created' Event</button>
+                </div>
+            </section>
+
+            <!-- Right Column: Live Logs -->
+            <section class="live-feed glass-panel">
+                <div class="feed-header">
+                    <h2>Mock Client Server Terminal</h2>
+                    <button id="btn-clear" class="btn outline small">Clear Logs</button>
+                </div>
+                <div class="terminal" id="terminal">
+                    <div class="terminal-line system">Waiting for incoming webhooks on POST /demo/receive...</div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="app.js?v=2"></script>
+</body>
+</html>

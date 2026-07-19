@@ -1,0 +1,58 @@
+spring:
+  application:
+    name: webhook-engine
+
+  datasource:
+    url: jdbc:mysql://localhost:3308/webhook_engine?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+    username: webhook
+    password: webhookpassword
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: validate # We manage schema via init.sql
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.MySQLDialect
+
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+    publisher-confirm-type: correlated
+    publisher-returns: true
+    template:
+      mandatory: true
+    listener:
+      simple:
+        acknowledge-mode: manual
+        prefetch: 10 # Prefetch count for fair dispatching
+        concurrency: 2
+        max-concurrency: 5
+
+server:
+  port: 8080
+
+logging:
+  level:
+    root: INFO
+    com.webhook.engine: DEBUG
+    org.springframework.amqp: INFO
+    org.hibernate.SQL: DEBUG
+
+# Custom Application Properties
+webhook:
+  retry:
+    max-attempts: 4
+  client:
+    connect-timeout-ms: 5000
+    read-timeout-ms: 10000
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html

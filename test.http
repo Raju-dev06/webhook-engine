@@ -1,0 +1,90 @@
+### 1. Register a Webhook Endpoint
+# This simulates a client (like an e-commerce store) telling us: 
+# "Hey, send webhooks to my URL!"
+POST http://localhost:8080/api/v1/endpoints
+Content-Type: application/json
+
+{
+  "url": "https://webhook.site/#!/view/YOUR-WEBHOOK-SITE-ID-HERE",
+  "secretKey": "my-super-secret-key"
+}
+
+> {%
+    client.global.set("endpointId", response.body.id);
+%}
+
+###
+
+### 2. Subscribe the Endpoint to an Event Type
+# This tells our system: "Only send 'payment.success' events to Endpoint 1"
+POST http://localhost:8080/api/v1/endpoints/{{endpointId}}/subscriptions
+Content-Type: application/json
+
+{
+  "eventType": "payment.success"
+}
+
+###
+
+### 3. Publish an Event (Trigger the Webhook!)
+# This simulates our internal system (like a billing service) saying:
+# "A payment was successful! Tell all subscribers!"
+POST http://localhost:8080/api/v1/events
+Content-Type: application/json
+
+{
+  "eventType": "payment.success",
+  "idempotencyKey": "unique-payment-12345",
+  "payload": {
+    "orderId": "ORD-999",
+    "amount": 250.50,
+    "currency": "USD",
+    "customerEmail": "test@example.com"
+  }
+}
+
+###
+
+### 4. Check Delivery History
+# View the history of webhooks sent to this endpoint
+GET http://localhost:8080/api/v1/deliveries/history/{{endpointId}}?page=0&size=10
+
+###
+
+### 5. Test Exponential Backoff (Force Failure)
+# Register a broken URL that doesn't exist to watch RabbitMQ retry!
+POST http://localhost:8080/api/v1/endpoints
+Content-Type: application/json
+
+{
+  "url": "http://localhost:9999/this-will-fail",
+  "secretKey": "fail-key"
+}
+
+> {%
+    client.global.set("failEndpointId", response.body.id);
+%}
+
+###
+
+### 6. Subscribe Broken Endpoint
+POST http://localhost:8080/api/v1/endpoints/{{failEndpointId}}/subscriptions
+Content-Type: application/json
+
+{
+  "eventType": "user.created"
+}
+
+###
+
+### 7. Trigger Event for Broken Endpoint (Watch the console logs!)
+POST http://localhost:8080/api/v1/events
+Content-Type: application/json
+
+{
+  "eventType": "user.created",
+  "idempotencyKey": "unique-user-999",
+  "payload": {
+    "userId": "USR-123"
+  }
+}
